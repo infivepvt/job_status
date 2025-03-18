@@ -7,6 +7,9 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 }
 $sql = "SELECT * FROM JobStatus";
 $result = $conn->query($sql);
+if (!$result) {
+    die("Query failed: " . $conn->error);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
