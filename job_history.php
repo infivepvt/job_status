@@ -6,7 +6,6 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     exit();
 }
 
-
 ?>
 
 <!DOCTYPE html>
@@ -40,7 +39,10 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 </tr>
             </thead>
             <tbody>
-                <?php while ($row = $result->fetch_assoc()): ?>
+                <?php
+                $sql = "SELECT * FROM JobStatus ORDER BY date DESC"; 
+                $result = $conn->query($sql);
+                while ($row = $result->fetch_assoc()): ?>
                     <tr ondblclick="editJob(<?= $row['id'] ?>, '<?= $row['order_number'] ?>', '<?= $row['company_name'] ?>', '<?= $row['job_start_date'] ?>', '<?= $row['deadline'] ?>', '<?= $row['status'] ?>')">
                         <td><?= $row['order_number'] ?></td>
                         <td><?= $row['company_name'] ?></td>
