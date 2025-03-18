@@ -142,14 +142,7 @@ $conn->close();
         </form>
     </div>
 
-    <script>
-        document.getElementById('contact_number').addEventListener('input', function () {
-            this.value = this.value.replace(/\D/g, ''); 
-            if (this.value.length > 10) {
-                this.value = this.value.slice(0, 10); 
-            }
-        });
-    </script>
+   
 
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
