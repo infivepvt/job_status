@@ -1,15 +1,6 @@
 <?php
 
-session_start();
-if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-    header('Location: login.php');
-    exit();
-}
-$sql = "SELECT * FROM JobStatus";
-$result = $conn->query($sql);
-if (!$result) {
-    die("Query failed: " . $conn->error);
-}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
