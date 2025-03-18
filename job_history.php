@@ -6,9 +6,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     exit();
 }
 
-// Order by date in descending order (latest jobs appear first)
-$sql = "SELECT * FROM JobStatus ORDER BY date DESC"; 
-$result = $conn->query($sql);
+
 ?>
 
 <!DOCTYPE html>
