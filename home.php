@@ -1,11 +1,11 @@
 <?php
 include 'db.php';
-
-$sql = "SELECT * FROM JobStatus";
-$result = $conn->query($sql);
-if (!$result) {
-    die("Query failed: " . $conn->error);
+session_start();
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+    header('Location: login.php');
+    exit();
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
