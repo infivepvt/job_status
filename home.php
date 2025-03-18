@@ -19,16 +19,6 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 
 <body>
     <?php include('header.php'); ?>
-
-    <?php 
-    $sql = "SELECT * FROM JobStatus";
-    $result = $conn->query($sql);
-    if (!$result) {
-        die("Query failed: " . $conn->error);
-    }
-    
-    
-    ?>
     
     <div class="container mt-5">
         <h1 class="mb-4">Job Status List</h1>
