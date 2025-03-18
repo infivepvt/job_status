@@ -15,11 +15,50 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Jobs</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-cell[data-status="Design"] {
+            background-color: #f0ad4e;
+        }
+
+        .status-cell[data-status="Confirmation"] {
+            background-color: #5bc0de;
+        }
+
+        .status-cell[data-status="Print"] {
+            background-color: #0275d8;
+        }
+
+        .status-cell[data-status="Delivery"] {
+            background-color: #5cb85c;
+        }
+
+        .status-cell[data-status="Finished"] {
+            background-color: #d9534f;
+        }
+
+        .finished-row {
+            display: none;
+        }
+
+        #jobTable tbody tr {
+            transition: background-color 0.3s ease;
+        }
+
+        #jobTable tbody tr:hover {
+            background-color: rgb(103, 166, 233);
+            color: #fff;
+            cursor: pointer;
+        }
+
+        #jobTable tbody tr:focus-within {
+            background-color: #5bc0de;
+            color: #fff;
+        }
+    </style>
 </head>
 
 <body>
     <?php include('header.php'); ?>
-    
     <div class="container mt-5">
         <h1 class="mb-4">Job Status List</h1>
         <div class="mb-4">
@@ -38,7 +77,9 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 </tr>
             </thead>
             <tbody>
-                <?php while ($row = $result->fetch_assoc()): ?>
+                <?php $sql = "SELECT * FROM JobStatus";
+                $result = $conn->query($sql);
+                while ($row = $result->fetch_assoc()): ?>
                     <tr class="<?= $row['status'] === 'Finished' ? 'finished-row' : '' ?>"
                         ondblclick="editJob(<?= $row['id'] ?>, '<?= $row['order_number'] ?>', '<?= $row['company_name'] ?>', '<?= $row['contact_number'] ?>', '<?= $row['job_start_date'] ?>', '<?= $row['deadline'] ?>', '<?= $row['status'] ?>')">
                         <td><?= $row['order_number'] ?></td>
@@ -170,12 +211,6 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             });
         }
 
-        document.getElementById('contact_number').addEventListener('input', function () {
-            this.value = this.value.replace(/\D/g, ''); // Remove non-numeric characters
-            if (this.value.length > 10) {
-                this.value = this.value.slice(0, 10); // Restrict to 10 digits
-            }
-        });
     </script>
 </body>
 
