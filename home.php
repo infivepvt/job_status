@@ -19,46 +19,6 @@ if (!$result) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Jobs</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .status-cell[data-status="Design"] {
-            background-color: #f0ad4e;
-        }
-
-        .status-cell[data-status="Confirmation"] {
-            background-color: #5bc0de;
-        }
-
-        .status-cell[data-status="Print"] {
-            background-color: #0275d8;
-        }
-
-        .status-cell[data-status="Delivery"] {
-            background-color: #5cb85c;
-        }
-
-        .status-cell[data-status="Finished"] {
-            background-color: #d9534f;
-        }
-
-        .finished-row {
-            display: none;
-        }
-
-        #jobTable tbody tr {
-            transition: background-color 0.3s ease;
-        }
-
-        #jobTable tbody tr:hover {
-            background-color: rgb(103, 166, 233);
-            color: #fff;
-            cursor: pointer;
-        }
-
-        #jobTable tbody tr:focus-within {
-            background-color: #5bc0de;
-            color: #fff;
-        }
-    </style>
 </head>
 
 <body>
