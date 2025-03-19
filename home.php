@@ -77,7 +77,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 </tr>
             </thead>
             <tbody>
-                <?php $sql = "SELECT * FROM JobStatus";
+                <?php $sql = "SELECT * FROM job_status";
                 $result = $conn->query($sql);
                 while ($row = $result->fetch_assoc()): ?>
                     <tr class="<?= $row['status'] === 'Finished' ? 'finished-row' : '' ?>"

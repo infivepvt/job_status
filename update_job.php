@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $job_start_date = str_replace("T", " ", $job_start_date);
     $deadline = str_replace("T", " ", $deadline);
 
-    $sql = "UPDATE JobStatus SET order_number = ?, company_name = ?, contact_number = ?, job_start_date = ?, deadline = ?, status = ? WHERE id = ?";
+    $sql = "UPDATE job_status SET order_number = ?, company_name = ?, contact_number = ?, job_start_date = ?, deadline = ?, status = ? WHERE id = ?";
     $stmt = $conn->prepare($sql);
 
     $stmt->bind_param('ssssssi', $order_number, $company_name, $contactNumber, $job_start_date, $deadline, $status, $id);

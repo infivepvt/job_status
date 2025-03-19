@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $job_start_date = str_replace("T", " ", $job_start_date);
     $deadline = str_replace("T", " ", $deadline);
 
-    $check_sql = "SELECT COUNT(*) FROM JobStatus WHERE order_number = ?";
+    $check_sql = "SELECT COUNT(*) FROM job_status WHERE order_number = ?";
     $check_stmt = $conn->prepare($check_sql);
     $check_stmt->bind_param('s', $order_number);
     $check_stmt->execute();
@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
 
-        $sql = "INSERT INTO JobStatus (date, order_number, company_name, contact_number, job_start_date, deadline, status)
+        $sql = "INSERT INTO job_status (date, order_number, company_name, contact_number, job_start_date, deadline, status)
             VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);
@@ -141,8 +141,6 @@ $conn->close();
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
     </div>
-
-   
 
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
