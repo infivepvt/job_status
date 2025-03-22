@@ -130,6 +130,7 @@ $conn->close();
         <div class="col-md-6">
             <label for="status" class="form-label">Status</label>
             <select name="status" id="status" class="form-select" required>
+            <option value="NotYet">Not Yet</option>
                 <option value="Design">Design</option>
                 <option value="Confirmation">Confirmation</option>
                 <option value="Print">Print</option>

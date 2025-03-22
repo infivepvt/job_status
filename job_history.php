@@ -62,6 +62,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                         <td><?= $row['date'] ?></td>
                         <td class="status-cell text-white text-center">
                             <select class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
+                                <option value="NotYet" <?= ($row['status'] == 'NotYet') ? 'selected' : '' ?>>Not Yet</option>
                                 <option value="Design" <?= ($row['status'] == 'Design') ? 'selected' : '' ?>>Design</option>
                                 <option value="Confirmation" <?= ($row['status'] == 'Confirmation') ? 'selected' : '' ?>>
                                     Confirmation</option>
@@ -72,6 +73,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                                 </option>
                             </select>
                         </td>
+
 
 
                     </tr>
@@ -86,6 +88,11 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             padding: 5px;
         }
 
+        .status-dropdown option[value="NotYet"] {
+            background-color: #d889f7;
+            color: black;
+        }
+
         .status-dropdown option[value="Design"] {
             background-color: #f0ad4e;
             color: black;
@@ -97,7 +104,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
         }
 
         .status-dropdown option[value="Print"] {
-            background-color: #0275d8;
+            background-color: #09e9cb;
             color: white;
         }
 
@@ -174,14 +181,16 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             let statusColor = {
                 "Design": "#f0ad4e",
                 "Confirmation": "#5bc0de",
-                "Print": "#0275d8",
+                "Print": "#09e9cb",
                 "Delivery": "#5cb85c",
-                "Finished": "#d9534f"
+                "Finished": "#d9534f",
+                "NotYet": "#d889f7"
             };
 
             dropdown.style.backgroundColor = statusColor[dropdown.value] || "white";
             dropdown.style.color = "white";
         }
+
     </script>
 </body>
 
