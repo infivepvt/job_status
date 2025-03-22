@@ -5,7 +5,6 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header('Location: login.php');
     exit();
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -16,6 +15,8 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Jobs</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500&display=swap" rel="stylesheet">
+
 </head>
 
 <body>
@@ -24,7 +25,8 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     <div class="container mt-5">
         <h1 class="mb-4">Job Status History</h1>
         <div class="mb-4">
-            <input type="text" id="searchBar" class="form-control" placeholder="Search by Order Number or Company Name" onkeyup="searchJobs()">
+            <input type="text" id="searchBar" class="form-control" placeholder="Search by Order Number or Company Name"
+                onkeyup="searchJobs()">
         </div>
 
         <table class="table table-bordered table-striped" id="jobTable">
@@ -35,23 +37,43 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                     <th>Contact Number</th>
                     <th>Job Start Date</th>
                     <th>Deadline</th>
+                    <th>Category</th>
+                    <th>Quantity</th>
+                    <th>Date</th>
                     <th>Status</th>
+
                 </tr>
             </thead>
             <tbody>
                 <?php
-                $sql = "SELECT * FROM job_status ORDER BY date DESC"; 
+                $sql = "SELECT * FROM job_status 
+                ORDER BY FIELD(status, 'date') DESC, date DESC";
+
                 $result = $conn->query($sql);
                 while ($row = $result->fetch_assoc()): ?>
-                    <tr ondblclick="editJob(<?= $row['id'] ?>, '<?= $row['order_number'] ?>', '<?= $row['company_name'] ?>', '<?= $row['job_start_date'] ?>', '<?= $row['deadline'] ?>', '<?= $row['status'] ?>')">
+                    <tr>
                         <td><?= $row['order_number'] ?></td>
                         <td><?= $row['company_name'] ?></td>
                         <td><?= $row['contact_number'] ?></td>
                         <td><?= $row['job_start_date'] ?></td>
                         <td><?= $row['deadline'] ?></td>
-                        <td class="status-cell text-white text-center" data-status="<?= $row['status'] ?>">
-                            <?= $row['status'] ?>
+                        <td><?= $row['category'] ?></td>
+                        <td><?= $row['quantity'] ?></td>
+                        <td><?= $row['date'] ?></td>
+                        <td class="status-cell text-white text-center">
+                            <select class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
+                                <option value="Design" <?= ($row['status'] == 'Design') ? 'selected' : '' ?>>Design</option>
+                                <option value="Confirmation" <?= ($row['status'] == 'Confirmation') ? 'selected' : '' ?>>
+                                    Confirmation</option>
+                                <option value="Print" <?= ($row['status'] == 'Print') ? 'selected' : '' ?>>Print</option>
+                                <option value="Delivery" <?= ($row['status'] == 'Delivery') ? 'selected' : '' ?>>Delivery
+                                </option>
+                                <option value="Finished" <?= ($row['status'] == 'Finished') ? 'selected' : '' ?>>Finished
+                                </option>
+                            </select>
                         </td>
+
+
                     </tr>
                 <?php endwhile; ?>
             </tbody>
@@ -59,26 +81,46 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     </div>
 
     <style>
-        .status-cell[data-status="Design"] {
+        .status-dropdown {
+            border: 1px solid #ccc;
+            padding: 5px;
+        }
+
+        .status-dropdown option[value="Design"] {
             background-color: #f0ad4e;
+            color: black;
         }
 
-        .status-cell[data-status="Confirmation"] {
+        .status-dropdown option[value="Confirmation"] {
             background-color: #5bc0de;
+            color: black;
         }
 
-        .status-cell[data-status="Print"] {
+        .status-dropdown option[value="Print"] {
             background-color: #0275d8;
+            color: white;
         }
 
-        .status-cell[data-status="Delivery"] {
+        .status-dropdown option[value="Delivery"] {
             background-color: #5cb85c;
+            color: white;
         }
 
-        .status-cell[data-status="Finished"] {
+        .status-dropdown option[value="Finished"] {
             background-color: #d9534f;
+            color: white;
         }
 
+        #jobTable tbody td {
+            font-weight: 100;
+            font-family: 'Rubik', sans-serif;
+        }
+
+
+        #jobTable tbody tr:hover {
+            background-color: rgb(103, 166, 233);
+            cursor: pointer;
+        }
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
@@ -92,11 +134,53 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 const orderNumber = row.cells[0].textContent.toLowerCase();
                 const companyName = row.cells[1].textContent.toLowerCase();
                 if (orderNumber.includes(searchTerm) || companyName.includes(searchTerm)) {
-                    row.style.display = ''; 
+                    row.style.display = '';
                 } else {
-                    row.style.display = 'none'; 
+                    row.style.display = 'none';
                 }
             });
+        }
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".status-dropdown").forEach(dropdown => {
+                setDropdownColor(dropdown);
+
+                dropdown.addEventListener("change", function () {
+                    const jobId = this.getAttribute("data-id");
+                    const newStatus = this.value;
+
+                    fetch("update_status.php", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: `id=${jobId}&status=${newStatus}`
+                    })
+                        .then(response => response.text())
+                        .then(data => {
+                            if (data === "success") {
+                                alert("Status updated successfully!");
+                                setDropdownColor(this);
+                            } else {
+                                alert("Error updating status.");
+                            }
+                        });
+                });
+            });
+        });
+
+        function setDropdownColor(dropdown) {
+            let statusColor = {
+                "Design": "#f0ad4e",
+                "Confirmation": "#5bc0de",
+                "Print": "#0275d8",
+                "Delivery": "#5cb85c",
+                "Finished": "#d9534f"
+            };
+
+            dropdown.style.backgroundColor = statusColor[dropdown.value] || "white";
+            dropdown.style.color = "white";
         }
     </script>
 </body>

@@ -1,57 +1,42 @@
 <?php
 include("db.php");
+session_start();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = trim($_POST["username"]);
-    $email = trim($_POST["email"]);
+    $username = $_POST["username"];
     $password = $_POST["password"];
 
-    // Hash the password securely
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    $sql = "SELECT id, password FROM users WHERE username=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $stmt->store_result();
+    $stmt->bind_result($id, $hashed_password);
+    $stmt->fetch();
 
-    // Check if the username or email already exists
-    $check_sql = "SELECT COUNT(*) FROM users WHERE username = ? OR email = ?";
-    $check_stmt = $conn->prepare($check_sql);
-    $check_stmt->bind_param("ss", $username, $email);
-    $check_stmt->execute();
-    $check_stmt->bind_result($count);
-    $check_stmt->fetch();
-    $check_stmt->close();
-
-    if ($count > 0) {
-        echo "<div class='alert alert-danger'>Error: Username or Email already exists. Please use a different one.</div>";
+    if ($stmt->num_rows > 0 && password_verify($password, $hashed_password)) {
+        $_SESSION["user_id"] = $id;
+        $_SESSION["username"] = $username;
+        $_SESSION['loggedin'] = true; 
+        header("Location: home.php");
+        exit();
     } else {
-        // Insert new user into database
-        $sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sss", $username, $email, $hashed_password);
-
-        if ($stmt->execute()) {
-            $stmt->close();
-            // Redirect immediately to login.php
-            header("Location: login.php");
-            exit();
-        } else {
-            echo "<div class='alert alert-danger'>Error: " . $stmt->error . "</div>";
-        }
-        $stmt->close();
+        echo "<div class='alert alert-danger'>Invalid username or password!</div>";
     }
 }
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signup</title>
+    <title>Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container mt-5">
-        <h2 class="text-center mb-4">Sign Up</h2>
+        <h2 class="text-center mb-4">Login</h2>
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <form method="post" class="border p-4 rounded shadow-sm">
@@ -60,16 +45,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <input type="text" name="username" id="username" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" name="email" id="email" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
                         <input type="password" name="password" id="password" class="form-control" required>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
                 </form>
-                <p class="mt-3 text-center">Already have an account? <a href="login.php">Login</a></p>
+                <p class="mt-3 text-center">Don't have an account? <a href="signIn.php">Sign Up</a></p>
             </div>
         </div>
     </div>
