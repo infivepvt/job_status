@@ -365,74 +365,61 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
         }
     </script>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Hide finished rows when the page loads
-            hideFinishedRows();
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".status-dropdown").forEach(dropdown => {
+            setDropdownColor(dropdown);
 
-            document.querySelectorAll(".status-dropdown").forEach(dropdown => {
-                setDropdownColor(dropdown);
+            dropdown.addEventListener("change", function () {
+                const jobId = this.getAttribute("data-id");
+                const newStatus = this.value;
+                const row = this.closest('tr');
 
-                dropdown.addEventListener("change", function () {
-                    const jobId = this.getAttribute("data-id");
-                    const newStatus = this.value;
-
-                    // Update status in database
-                    fetch("update_status.php", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded"
-                        },
-                        body: `id=${jobId}&status=${newStatus}`
-                    })
-                        .then(response => response.text())
-                        .then(data => {
-                            if (data === "success") {
-                                alert("Status updated successfully!");
-                                setDropdownColor(this);
-                                toggleRowVisibility(newStatus, this.closest('tr'));
-                            } else {
-                                alert("Error updating status.");
-                            }
-                        });
+                // Update status in database
+                fetch("update_status.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: `id=${jobId}&status=${newStatus}`
+                })
+                .then(response => response.text())
+                .then(data => {
+                    if (data === "success") {
+                        setDropdownColor(this);
+                        
+                        if (newStatus === 'Finished') {
+                            // If status changed to Finished, reload the page
+                            alert("Status updated to Finished. Page will refresh.");
+                            location.reload();
+                        } else {
+                            // For other status changes, just update the color
+                            alert("Status updated successfully!");
+                        }
+                    } else {
+                        alert("Error updating status.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("Error updating status.");
                 });
             });
-
-            // Hide rows with "Finished" status
-            function hideFinishedRows() {
-                const rows = document.querySelectorAll('#jobTable tbody tr');
-                rows.forEach(row => {
-                    const statusCell = row.querySelector('td.status-cell select');
-                    if (statusCell && statusCell.value === 'Finished') {
-                        row.style.display = 'none';
-                    }
-                });
-            }
-
-            // Show or hide the row based on its status
-            function toggleRowVisibility(status, row) {
-                if (status === 'Finished') {
-                    row.style.display = 'none';
-                } else {
-                    row.style.display = '';
-                }
-            }
         });
+    });
 
-        // Set the background color based on the status
-        function setDropdownColor(dropdown) {
-            let statusColor = {
-                "Design": "#f0ad4e",
-                "Confirmation": "#5bc0de",
-                "Print": "#09e9cb",
-                "Delivery": "#5cb85c",
-                "Finished": "#d9534f",
-                "NotPaid": "#d889f7"
-            };
-
-            dropdown.style.backgroundColor = statusColor[dropdown.value] || "white";
-            dropdown.style.color = "white";
-        }
-    </script>
+    function setDropdownColor(dropdown) {
+        let statusColor = {
+            "Design": "#f0ad4e",
+            "Confirmation": "#5bc0de",
+            "Print": "#09e9cb",
+            "Delivery": "#5cb85c",
+            "Finished": "#d9534f",
+            "NotPaid": "#d889f7"
+        };
+        dropdown.style.backgroundColor = statusColor[dropdown.value] || "white";
+        dropdown.style.color = "white";
+    }
+</script>
 </body>
 
 </html>
