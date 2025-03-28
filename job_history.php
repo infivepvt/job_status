@@ -62,7 +62,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                         <td><?= $row['date'] ?></td>
                         <td class="status-cell text-white text-center">
                             <select class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
-                                <option value="NotYet" <?= ($row['status'] == 'NotYet') ? 'selected' : '' ?>>Not Yet</option>
+                                <option value="NotPaid" <?= ($row['status'] == 'NotPaid') ? 'selected' : '' ?>>Not Paid</option>
                                 <option value="Design" <?= ($row['status'] == 'Design') ? 'selected' : '' ?>>Design</option>
                                 <option value="Confirmation" <?= ($row['status'] == 'Confirmation') ? 'selected' : '' ?>>
                                     Confirmation</option>
@@ -88,7 +88,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             padding: 5px;
         }
 
-        .status-dropdown option[value="NotYet"] {
+        .status-dropdown option[value="NotPaid"] {
             background-color: #d889f7;
             color: black;
         }
@@ -184,7 +184,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 "Print": "#09e9cb",
                 "Delivery": "#5cb85c",
                 "Finished": "#d9534f",
-                "NotYet": "#d889f7"
+                "NotPaid": "#d889f7"
             };
 
             dropdown.style.backgroundColor = statusColor[dropdown.value] || "white";

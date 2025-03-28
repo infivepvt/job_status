@@ -15,6 +15,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     <title>View Jobs</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
         .finished-row {
@@ -42,7 +43,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
         }
 
         /* Dropdown colors based on selection */
-        .status-dropdown option[value="NotYet"] {
+        .status-dropdown option[value="NotPaid"] {
             background-color: #d889f7;
             color: black;
         }
@@ -76,6 +77,22 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             font-weight: 100;
             font-family: 'Rubik', sans-serif;
         }
+
+        .delete-btn {
+            color: #dc3545;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .delete-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .action-cell {
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -98,7 +115,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                     <th>Job Start Date</th>
                     <th>Deadline</th>
                     <th>Status</th>
-
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -110,13 +127,14 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                         <td><?= $row['order_number'] ?></td>
                         <td><?= $row['company_name'] ?></td>
                         <td><?= $row['contact_number'] ?></td>
-                        <td><?= $row['category'] ?></td> <!-- Display Category -->
-                        <td><?= $row['quantity'] ?></td> <!-- Display Quantity -->
+                        <td><?= $row['category'] ?></td>
+                        <td><?= $row['quantity'] ?></td>
                         <td><?= $row['job_start_date'] ?></td>
                         <td><?= $row['deadline'] ?></td>
                         <td class="status-cell text-white text-center">
                             <select class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
-                                <option value="NotYet" <?= ($row['status'] == 'NotYet') ? 'selected' : '' ?>>Not Yet</option>
+                                <option value="NotPaid" <?= ($row['status'] == 'NotPaid') ? 'selected' : '' ?>>Not Paid
+                                </option>
                                 <option value="Design" <?= ($row['status'] == 'Design') ? 'selected' : '' ?>>Design</option>
                                 <option value="Confirmation" <?= ($row['status'] == 'Confirmation') ? 'selected' : '' ?>>
                                     Confirmation</option>
@@ -127,7 +145,12 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                                 </option>
                             </select>
                         </td>
-
+                        <td class="action-cell">
+                            <button class="delete-btn"
+                                onclick="confirmDelete(<?= $row['id'] ?>, '<?= $row['order_number'] ?>')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
                     </tr>
                 <?php endwhile; ?>
             </tbody>
@@ -147,7 +170,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                         <input type="hidden" id="jobId">
                         <div class="mb-3">
                             <label for="editOrderNumber" class="form-label">Order Number</label>
-                            <input type="text" class="form-control" id="editOrderNumber" required readonly>
+                            <input type="text" class="form-control" id="editOrderNumber" required>
                         </div>
                         <div class="mb-3">
                             <label for="editCompanyName" class="form-label">Company Name</label>
@@ -181,17 +204,101 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
         </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete order <span id="orderNumberToDelete"></span>? This action cannot
+                        be undone.</p>
+                    <div class="mb-3">
+                        <label for="deletePassword" class="form-label">Enter your password to confirm:</label>
+                        <input type="password" class="form-control" id="deletePassword" required>
+                        <div id="passwordError" class="text-danger mt-2" style="display: none;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        let jobIdToDelete = null;
+
+        function confirmDelete(id, orderNumber) {
+            jobIdToDelete = id;
+            document.getElementById('orderNumberToDelete').textContent = orderNumber;
+            document.getElementById('deletePassword').value = '';
+            document.getElementById('passwordError').style.display = 'none';
+
+            const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+            modal.show();
+
+            // Stop event propagation to prevent triggering the row's double-click event
+            event.stopPropagation();
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+            const password = document.getElementById('deletePassword').value;
+            const errorElement = document.getElementById('passwordError');
+
+            if (!password) {
+                errorElement.textContent = 'Please Enter Your Password';
+                errorElement.style.display = 'block';
+                return;
+            }
+
+            if (jobIdToDelete) {
+                deleteJob(jobIdToDelete, password);
+            }
+        });
+
+        function deleteJob(id, password) {
+    console.log("Attempting to delete job:", id, "with password:", password); // Debugging line
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'delete_job.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+    xhr.onload = function () {
+        console.log("Response from server:", xhr.responseText); // Debugging line
+        if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            if (response.status === 'success') {
+                alert('Job deleted successfully!');
+                window.location.reload();
+            } else {
+                const errorElement = document.getElementById('passwordError');
+                errorElement.textContent = response.message || 'Failed to delete job';
+                errorElement.style.display = 'block';
+            }
+        } else {
+            alert('Server error: Unable to delete job.');
+        }
+    };
+
+    xhr.send('id=' + encodeURIComponent(id) + '&password=' + encodeURIComponent(password));
+}
+
         function editJob(id, order_number, company_name, contact_number, category, quantity, job_start_date, deadline, status) {
             document.getElementById('jobId').value = id;
             document.getElementById('editOrderNumber').value = order_number;
             document.getElementById('editCompanyName').value = company_name;
             document.getElementById('editContactNumber').value = contact_number;
-            document.getElementById('editCategory').value = category; // Populate Category
-            document.getElementById('editQuantity').value = quantity; // Populate Quantity
+            document.getElementById('editCategory').value = category;
+            document.getElementById('editQuantity').value = quantity;
             document.getElementById('editJobStartDate').value = job_start_date.replace(' ', 'T');
             document.getElementById('editDeadline').value = deadline.replace(' ', 'T');
 
@@ -282,7 +389,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                             if (data === "success") {
                                 alert("Status updated successfully!");
                                 setDropdownColor(this);
-                                toggleRowVisibility(newStatus, this.closest('tr')); // Toggle row visibility
+                                toggleRowVisibility(newStatus, this.closest('tr'));
                             } else {
                                 alert("Error updating status.");
                             }
@@ -296,7 +403,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 rows.forEach(row => {
                     const statusCell = row.querySelector('td.status-cell select');
                     if (statusCell && statusCell.value === 'Finished') {
-                        row.style.display = 'none'; // Hide rows with "Finished" status
+                        row.style.display = 'none';
                     }
                 });
             }
@@ -304,9 +411,9 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             // Show or hide the row based on its status
             function toggleRowVisibility(status, row) {
                 if (status === 'Finished') {
-                    row.style.display = 'none'; // Hide the row if status is "Finished"
+                    row.style.display = 'none';
                 } else {
-                    row.style.display = ''; // Show the row if status is not "Finished"
+                    row.style.display = '';
                 }
             }
         });
@@ -319,14 +426,12 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 "Print": "#09e9cb",
                 "Delivery": "#5cb85c",
                 "Finished": "#d9534f",
-                "NotYet": "#d889f7"
+                "NotPaid": "#d889f7"
             };
 
             dropdown.style.backgroundColor = statusColor[dropdown.value] || "white";
-            dropdown.style.color = "white"; // Ensure text is visible
+            dropdown.style.color = "white";
         }
-
-
     </script>
 </body>
 
