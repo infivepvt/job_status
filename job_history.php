@@ -5,6 +5,10 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header('Location: login.php');
     exit();
 }
+
+// Check filter settings
+$showHidden = isset($_GET['show_hidden']) && $_GET['show_hidden'] == 1;
+$showFinished = isset($_GET['show_finished']) && $_GET['show_finished'] == 1;
 ?>
 
 <!DOCTYPE html>
@@ -13,17 +17,17 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Jobs</title>
+    <title>All job events</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500&display=swap" rel="stylesheet">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
 <body>
     <?php include('header.php'); ?>
 
-    <div class="container mt-5">
-        <h1 class="mb-4">Job Status History</h1>
+    <div class="container-fluid">
+        <h1 class="mb-4">All job events</h1>
 
         <!-- Filter Controls -->
         <div class="mb-4 row g-3">
@@ -37,20 +41,35 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             <div class="col-md-3">
                 <input type="date" id="dateTo" class="form-control" placeholder="To Date">
             </div>
+            
+
         </div>
 
         <div class="mb-4">
             <button class="btn btn-primary me-2" onclick="applyFilters()">
-                <i class="bi bi-funnel"></i> Apply Filters
+                <i class="fas fa-filter"></i> Apply Filters
             </button>
-            <button class="btn btn-outline-secondary" onclick="clearFilters()">
-                <i class="bi bi-x-circle"></i> Clear Filters
+            <button class="btn btn-outline-secondary me-2" onclick="clearFilters()">
+                <i class="fas fa-times-circle"></i> Clear Filters
+            </button>
+            <button id="toggleFinishedBtn"
+                class="btn <?= $showFinished ? 'btn-success' : 'btn-outline-success' ?> me-2">
+                <i class="fas <?= $showFinished ? 'fa-check-square' : 'fa-square' ?>"></i>
+                <?= $showFinished ? 'Hide' : 'Show' ?> History
+            </button>
+            <button id="toggleHiddenBtn" class="btn <?= $showHidden ? 'btn-warning' : 'btn-outline-warning' ?>">
+                <i class="fas <?= $showHidden ? 'fa-eye' : 'fa-eye-slash' ?>"></i>
+                <?= $showHidden ? 'Hide' : 'Show' ?> Delete Jobs
+            </button>
+            <button id="toggleRestoredBtn" class="btn btn-outline-info">
+                <i class="fas fa-undo"></i> Show Only Restored Jobs
             </button>
         </div>
 
         <table class="table table-bordered table-striped" id="jobTable">
             <thead>
                 <tr>
+                    <th>No.</th>
                     <th>Order Number</th>
                     <th>Company Name</th>
                     <th>Contact Number</th>
@@ -60,23 +79,34 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                     <th>Quantity</th>
                     <th>Completion Date</th>
                     <th>Status</th>
-
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 <?php
-                $sql = "SELECT * FROM job_status WHERE status = 'Finished' ORDER BY date DESC";
+                $sql = "SELECT * FROM job_status WHERE 1=1";
 
+                if (!$showHidden) {
+                    $sql .= " AND hidden = 0";
+                }
+
+                if ($showFinished) {
+                    $sql .= " AND status = 'Finished'";
+                }
+
+                $sql .= " ORDER BY completion_date DESC";
 
                 $result = $conn->query($sql);
+                $count = 1; // Initialize counter
                 while ($row = $result->fetch_assoc()): ?>
-                    <tr>
-                        <td><?= $row['order_number'] ?></td>
-                        <td><?= $row['company_name'] ?></td>
-                        <td><?= $row['contact_number'] ?></td>
+                    <tr class="<?= $row['hidden'] ? 'hidden-row' : '' ?>">
+                        <td class="text-center"><?= $count++ ?></td> <!-- Display and increment counter -->
+                        <td><?= htmlspecialchars($row['order_number']) ?></td>
+                        <td><?= htmlspecialchars($row['company_name']) ?></td>
+                        <td><?= htmlspecialchars($row['contact_number']) ?></td>
                         <td><?= $row['job_start_date'] ?></td>
                         <td><?= $row['deadline'] ?></td>
-                        <td><?= $row['category'] ?></td>
+                        <td><?= htmlspecialchars($row['category']) ?></td>
                         <td><?= $row['quantity'] ?></td>
                         <td><?= isset($row['completion_date']) ? $row['completion_date'] : 'N/A' ?></td>
                         <td class="status-cell text-white text-center">
@@ -93,9 +123,13 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                                 </option>
                             </select>
                         </td>
-
-
-
+                        <td class="action-cell">
+                            <?php if ($row['hidden']): ?>
+                                <button class="btn btn-sm btn-success" onclick="restoreJob(<?= $row['id'] ?>)">
+                                    <i class="fas fa-undo"></i> Restore
+                                </button>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php endwhile; ?>
             </tbody>
@@ -143,52 +177,22 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             font-family: 'Rubik', sans-serif;
         }
 
-
         #jobTable tbody tr:hover {
             background-color: rgb(103, 166, 233);
             cursor: pointer;
         }
 
-        /* Add this to your existing style section */
-        #dateFrom,
-        #dateTo {
-            margin-left: 5px;
-            margin-right: 5px;
+        .hidden-row {
+            background-color: #f8f9fa !important;
+            color: #6c757d !important;
         }
 
-        .btn-primary {
-            margin-right: 10px;
+        .hidden-row td {
+            opacity: 0.7;
         }
 
-        #searchBar,
-        #dateFrom,
-        #dateTo {
-            transition: all 0.3s ease;
-        }
-
-        #searchBar:focus,
-        #dateFrom:focus,
-        #dateTo:focus {
-            border-color: #86b7fe;
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
-
-        .btn-primary {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-        }
-
-        .btn-outline-secondary {
-            border-color: #6c757d;
-            color: #6c757d;
-        }
-
-        @media (max-width: 768px) {
-
-            .col-md-6,
-            .col-md-3 {
-                margin-bottom: 10px;
-            }
+        .action-cell {
+            text-align: center;
         }
     </style>
 
@@ -196,74 +200,98 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 
     <script>
-          function applyFilters() {
+        function restoreJob(id) {
+            if (confirm('Restore this job to active jobs?')) {
+                fetch('restore_job.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `id=${id}`
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            alert('Job restored successfully!');
+                            location.reload();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    });
+            }
+        }
+
+        function applyFilters() {
             const searchTerm = document.getElementById('searchBar').value.toLowerCase();
             const dateFrom = document.getElementById('dateFrom').value;
             const dateTo = document.getElementById('dateTo').value;
             const rows = document.querySelectorAll('#jobTable tbody tr');
-            
+
             rows.forEach(row => {
-                // Text search check
-                const orderNumber = row.cells[0].textContent.toLowerCase();
-                const companyName = row.cells[1].textContent.toLowerCase();
-                const matchesSearch = !searchTerm || 
-                                     orderNumber.includes(searchTerm) || 
-                                     companyName.includes(searchTerm);
-                
-                // Date range check
-                const completionDateText = row.cells[7].textContent.trim();
+                const orderNumber = row.cells[1].textContent.toLowerCase();
+                const companyName = row.cells[2].textContent.toLowerCase();
+                const matchesSearch = !searchTerm ||
+                    orderNumber.includes(searchTerm) ||
+                    companyName.includes(searchTerm);
+
+                const completionDateText = row.cells[8].textContent.trim();
                 let matchesDate = true;
-                
+
                 if (dateFrom || dateTo) {
                     if (completionDateText === 'N/A') {
                         matchesDate = false;
                     } else {
                         try {
                             const rowDate = new Date(completionDateText);
-                            const fromDate = dateFrom ? new Date(dateFrom) : null;
-                            const toDate = dateTo ? new Date(dateTo) : null;
-                            
-                            if (fromDate) {
-                                rowDate.setHours(0, 0, 0, 0);
+
+                            // Normalize time components for proper date comparison
+                            rowDate.setHours(0, 0, 0, 0);
+
+                            if (dateFrom) {
+                                const fromDate = new Date(dateFrom);
                                 fromDate.setHours(0, 0, 0, 0);
-                                matchesDate = matchesDate && (rowDate >= fromDate);
+                                if (rowDate < fromDate) {
+                                    matchesDate = false;
+                                }
                             }
-                            if (toDate) {
-                                const endOfDay = new Date(toDate);
-                                endOfDay.setHours(23, 59, 59, 999);
-                                matchesDate = matchesDate && (rowDate <= endOfDay);
+
+                            if (dateTo && matchesDate) { // Only check if still matching
+                                const toDate = new Date(dateTo);
+                                toDate.setHours(23, 59, 59, 999); // End of day
+                                if (rowDate > toDate) {
+                                    matchesDate = false;
+                                }
                             }
                         } catch (e) {
+                            console.error("Date parsing error:", e);
                             matchesDate = false;
                         }
                     }
                 }
-                
-                // Show/hide based on both conditions
+
                 row.style.display = (matchesSearch && matchesDate) ? '' : 'none';
             });
         }
 
-        // Clear all filters
+        // Update the clearFilters function to reset properly
         function clearFilters() {
             document.getElementById('searchBar').value = '';
             document.getElementById('dateFrom').value = '';
             document.getElementById('dateTo').value = '';
-            applyFilters(); // This will show all rows now
+            const rows = document.querySelectorAll('#jobTable tbody tr');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
         }
-
-        // Initialize with event listeners
-        document.addEventListener("DOMContentLoaded", function() {
-            // Apply filters when search or date inputs change
+        document.addEventListener("DOMContentLoaded", function () {
             document.getElementById('searchBar').addEventListener('keyup', applyFilters);
             document.getElementById('dateFrom').addEventListener('change', applyFilters);
             document.getElementById('dateTo').addEventListener('change', applyFilters);
-            
-            // Your existing status dropdown initialization
+
             document.querySelectorAll(".status-dropdown").forEach(dropdown => {
                 setDropdownColor(dropdown);
-                
-                dropdown.addEventListener("change", function() {
+
+                dropdown.addEventListener("change", function () {
                     const jobId = this.getAttribute("data-id");
                     const newStatus = this.value;
 
@@ -274,19 +302,40 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                         },
                         body: `id=${jobId}&status=${newStatus}`
                     })
-                    .then(response => response.text())
-                    .then(data => {
-                        if (data === "success") {
-                            alert("Status updated successfully!");
-                            location.reload();
-                        } else {
-                            alert("Error updating status.");
-                        }
-                    });
+                        .then(response => response.text())
+                        .then(data => {
+                            if (data === "success") {
+                                alert("Status updated successfully!");
+                                location.reload();
+                            } else {
+                                alert("Error updating status.");
+                            }
+                        });
                 });
             });
-            
-            // Apply filters on initial page load
+
+            // Toggle hidden jobs
+            document.getElementById('toggleHiddenBtn').addEventListener('click', function () {
+                const url = new URL(window.location.href);
+                url.searchParams.set('show_hidden', <?= $showHidden ? '0' : '1' ?>);
+                window.location.href = url.toString();
+            });
+
+            // Toggle finished jobs
+            document.getElementById('toggleFinishedBtn').addEventListener('click', function () {
+                const url = new URL(window.location.href);
+                url.searchParams.set('show_finished', <?= $showFinished ? '0' : '1' ?>);
+                window.location.href = url.toString();
+            });
+
+            document.getElementById('toggleRestoredBtn').addEventListener('click', function () {
+                const rows = document.querySelectorAll('#jobTable tbody tr');
+                rows.forEach(row => {
+                    const isRestored = row.querySelector('.btn-success') !== null; // Restore button ඇතිද බලන්න
+                    row.style.display = isRestored ? '' : 'none';
+                });
+            });
+
             applyFilters();
         });
 
@@ -302,8 +351,6 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             dropdown.style.backgroundColor = statusColor[dropdown.value] || "white";
             dropdown.style.color = "white";
         }
-    </script>
-
     </script>
 </body>
 

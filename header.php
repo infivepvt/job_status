@@ -16,7 +16,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <a class="nav-link <?php echo ($current_page == 'view_jobs.php') ? 'active' : ''; ?>" href="view_jobs.php">Add Jobs</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo ($current_page == 'job_history.php') ? 'active' : ''; ?>" href="job_history.php">History</a>
+                    <a class="nav-link <?php echo ($current_page == 'job_history.php') ? 'active' : ''; ?>" href="job_history.php">All Events</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo ($current_page == 'logout.php') ? 'active' : ''; ?>" href="logout.php">Logout</a>

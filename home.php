@@ -93,20 +93,27 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
         .action-cell {
             text-align: center;
         }
+
+        #jobTable th:first-child,
+        #jobTable td:first-child {
+            width: 50px;
+            text-align: center;
+        }
     </style>
 </head>
 
 <body>
     <?php include('header.php'); ?>
-    <div class="container mt-5">
+    <div class="container-fluid">
         <h1 class="mb-4">Job Status List</h1>
         <div class="mb-4">
             <input type="text" id="searchBar" class="form-control" placeholder="Search by Order Number or Company Name"
                 onkeyup="searchJobs()">
         </div>
-        <table class="table table-bordered " id="jobTable">
+        <table class="table table-bordered" id="jobTable">
             <thead>
                 <tr>
+                    <th>No.</th>
                     <th>Order Number</th>
                     <th>Company Name</th>
                     <th>Contact Number</th>
@@ -119,15 +126,19 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 </tr>
             </thead>
             <tbody>
-                <?php $sql = "SELECT * FROM job_status";
+                <?php
+                $sql = "SELECT * FROM job_status WHERE hidden = 0";
                 $result = $conn->query($sql);
+                $rowCount = 1; // Initialize row counter
+                
                 while ($row = $result->fetch_assoc()): ?>
                     <tr class="<?= $row['status'] === 'Finished' ? 'finished-row' : '' ?>"
-                        ondblclick="editJob(<?= $row['id'] ?>, '<?= $row['order_number'] ?>', '<?= $row['company_name'] ?>', '<?= $row['contact_number'] ?>', '<?= $row['category'] ?>', <?= $row['quantity'] ?>, '<?= $row['job_start_date'] ?>', '<?= $row['deadline'] ?>', '<?= $row['status'] ?>')">
-                        <td><?= $row['order_number'] ?></td>
-                        <td><?= $row['company_name'] ?></td>
-                        <td><?= $row['contact_number'] ?></td>
-                        <td><?= $row['category'] ?></td>
+                        ondblclick="editJob(<?= $row['id'] ?>, '<?= htmlspecialchars($row['order_number']) ?>', '<?= htmlspecialchars($row['company_name']) ?>', '<?= htmlspecialchars($row['contact_number']) ?>', '<?= htmlspecialchars($row['category']) ?>', <?= $row['quantity'] ?>, '<?= $row['job_start_date'] ?>', '<?= $row['deadline'] ?>', '<?= $row['status'] ?>')">
+                        <td class="text-center"><?= $rowCount++ ?></td> <!-- Display and increment counter -->
+                        <td><?= htmlspecialchars($row['order_number']) ?></td>
+                        <td><?= htmlspecialchars($row['company_name']) ?></td>
+                        <td><?= htmlspecialchars($row['contact_number']) ?></td>
+                        <td><?= htmlspecialchars($row['category']) ?></td>
                         <td><?= $row['quantity'] ?></td>
                         <td><?= $row['job_start_date'] ?></td>
                         <td><?= $row['deadline'] ?></td>
@@ -147,7 +158,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                         </td>
                         <td class="action-cell">
                             <button class="delete-btn"
-                                onclick="confirmDelete(<?= $row['id'] ?>, '<?= $row['order_number'] ?>')">
+                                onclick="confirmDelete(<?= $row['id'] ?>, '<?= htmlspecialchars($row['order_number']) ?>')">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </td>
@@ -265,32 +276,36 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
         });
 
         function deleteJob(id, password) {
-    console.log("Attempting to delete job:", id, "with password:", password); // Debugging line
+            fetch('delete_job.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `id=${id}&password=${encodeURIComponent(password)}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Close the modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
+                        modal.hide();
 
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'delete_job.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                        // Refresh the entire table (reload the page)
+                        location.reload(); // ← This will refresh the table
 
-    xhr.onload = function () {
-        console.log("Response from server:", xhr.responseText); // Debugging line
-        if (xhr.status === 200) {
-            const response = JSON.parse(xhr.responseText);
-            if (response.status === 'success') {
-                alert('Job deleted successfully!');
-                window.location.reload();
-            } else {
-                const errorElement = document.getElementById('passwordError');
-                errorElement.textContent = response.message || 'Failed to delete job';
-                errorElement.style.display = 'block';
-            }
-        } else {
-            alert('Server error: Unable to delete job.');
+                        // Optional: Show a success message
+                        alert('Job deleted successfully!');
+                    } else {
+                        const errorElement = document.getElementById('passwordError');
+                        errorElement.textContent = data.message || 'Failed to delete job';
+                        errorElement.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the job.');
+                });
         }
-    };
-
-    xhr.send('id=' + encodeURIComponent(id) + '&password=' + encodeURIComponent(password));
-}
 
         function editJob(id, order_number, company_name, contact_number, category, quantity, job_start_date, deadline, status) {
             document.getElementById('jobId').value = id;
@@ -365,61 +380,61 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
         }
     </script>
     <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        document.querySelectorAll(".status-dropdown").forEach(dropdown => {
-            setDropdownColor(dropdown);
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".status-dropdown").forEach(dropdown => {
+                setDropdownColor(dropdown);
 
-            dropdown.addEventListener("change", function () {
-                const jobId = this.getAttribute("data-id");
-                const newStatus = this.value;
-                const row = this.closest('tr');
+                dropdown.addEventListener("change", function () {
+                    const jobId = this.getAttribute("data-id");
+                    const newStatus = this.value;
+                    const row = this.closest('tr');
 
-                // Update status in database
-                fetch("update_status.php", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded"
-                    },
-                    body: `id=${jobId}&status=${newStatus}`
-                })
-                .then(response => response.text())
-                .then(data => {
-                    if (data === "success") {
-                        setDropdownColor(this);
-                        
-                        if (newStatus === 'Finished') {
-                            // If status changed to Finished, reload the page
-                            alert("Status updated to Finished. Page will refresh.");
-                            location.reload();
-                        } else {
-                            // For other status changes, just update the color
-                            alert("Status updated successfully!");
-                        }
-                    } else {
-                        alert("Error updating status.");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    alert("Error updating status.");
+                    // Update status in database
+                    fetch("update_status.php", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: `id=${jobId}&status=${newStatus}`
+                    })
+                        .then(response => response.text())
+                        .then(data => {
+                            if (data === "success") {
+                                setDropdownColor(this);
+
+                                if (newStatus === 'Finished') {
+                                    // If status changed to Finished, reload the page
+                                    alert("Status updated to Finished. Page will refresh.");
+                                    location.reload();
+                                } else {
+                                    // For other status changes, just update the color
+                                    alert("Status updated successfully!");
+                                }
+                            } else {
+                                alert("Error updating status.");
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error:", error);
+                            alert("Error updating status.");
+                        });
                 });
             });
         });
-    });
 
-    function setDropdownColor(dropdown) {
-        let statusColor = {
-            "Design": "#f0ad4e",
-            "Confirmation": "#5bc0de",
-            "Print": "#09e9cb",
-            "Delivery": "#5cb85c",
-            "Finished": "#d9534f",
-            "NotPaid": "#d889f7"
-        };
-        dropdown.style.backgroundColor = statusColor[dropdown.value] || "white";
-        dropdown.style.color = "white";
-    }
-</script>
+        function setDropdownColor(dropdown) {
+            let statusColor = {
+                "Design": "#f0ad4e",
+                "Confirmation": "#5bc0de",
+                "Print": "#09e9cb",
+                "Delivery": "#5cb85c",
+                "Finished": "#d9534f",
+                "NotPaid": "#d889f7"
+            };
+            dropdown.style.backgroundColor = statusColor[dropdown.value] || "white";
+            dropdown.style.color = "white";
+        }
+    </script>
 </body>
 
 </html>
