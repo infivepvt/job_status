@@ -113,7 +113,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
         <table class="table table-bordered" id="jobTable">
             <thead>
                 <tr>
-                    
+                    <th>No.</th>
                     <th>Order Number</th>
                     <th>Company Name</th>
                     <th>Contact Number</th>
@@ -128,12 +128,15 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             <tbody>
                 <?php
                 $sql = "SELECT * FROM job_status WHERE hidden = 0";
-                $result = $conn->query($sql);             
-                
+                $result = $conn->query($sql);
+                $rowCount = 1;
+
                 while ($row = $result->fetch_assoc()): ?>
                     <tr class="<?= $row['status'] === 'Finished' ? 'finished-row' : '' ?>"
                         ondblclick="editJob(<?= $row['id'] ?>, '<?= htmlspecialchars($row['order_number']) ?>', '<?= htmlspecialchars($row['company_name']) ?>', '<?= htmlspecialchars($row['contact_number']) ?>', '<?= htmlspecialchars($row['category']) ?>', <?= $row['quantity'] ?>, '<?= $row['job_start_date'] ?>', '<?= $row['deadline'] ?>', '<?= $row['status'] ?>')">
-                        
+                        <td class="text-center">
+                            <?= ($row['status'] !== 'Finished') ? $rowCount++ : '-' ?>
+                        </td>
                         <td><?= htmlspecialchars($row['order_number']) ?></td>
                         <td><?= htmlspecialchars($row['company_name']) ?></td>
                         <td><?= htmlspecialchars($row['contact_number']) ?></td>
