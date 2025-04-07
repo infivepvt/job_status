@@ -66,7 +66,7 @@ $showFinished = isset($_GET['show_finished']) && $_GET['show_finished'] == 1;
             <div class="col-md-3">
                 <input type="date" id="dateTo" class="form-control" placeholder="To Date">
             </div>
-            
+
 
         </div>
 
@@ -136,6 +136,8 @@ $showFinished = isset($_GET['show_finished']) && $_GET['show_finished'] == 1;
                         <td><?= isset($row['completion_date']) ? $row['completion_date'] : 'N/A' ?></td>
                         <td class="status-cell text-white text-center">
                             <select class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
+                                <option value="Call" <?= ($row['status'] == 'Call') ? 'selected' : '' ?>>Call</option>
+                                <option value="Chat" <?= ($row['status'] == 'Chat') ? 'selected' : '' ?>>Chat</option>
                                 <option value="NotPaid" <?= ($row['status'] == 'NotPaid') ? 'selected' : '' ?>>Not Paid
                                 </option>
                                 <option value="Design" <?= ($row['status'] == 'Design') ? 'selected' : '' ?>>Design</option>
@@ -218,6 +220,16 @@ $showFinished = isset($_GET['show_finished']) && $_GET['show_finished'] == 1;
 
         .action-cell {
             text-align: center;
+        }
+
+        .status-dropdown option[value="Call"] {
+            background-color: #a6d7ff;
+            color: black;
+        }
+
+        .status-dropdown option[value="Chat"] {
+            background-color: #ffb6c1;
+            color: black;
         }
     </style>
 
@@ -366,12 +378,14 @@ $showFinished = isset($_GET['show_finished']) && $_GET['show_finished'] == 1;
 
         function setDropdownColor(dropdown) {
             let statusColor = {
+                "Call": "#a6d7ff",
+                "Chat": "#ffb6c1",
+                "NotPaid": "#d889f7",
                 "Design": "#f0ad4e",
                 "Confirmation": "#5bc0de",
                 "Print": "#09e9cb",
                 "Delivery": "#5cb85c",
-                "Finished": "#d9534f",
-                "NotPaid": "#d889f7"
+                "Finished": "#d9534f"
             };
             dropdown.style.backgroundColor = statusColor[dropdown.value] || "white";
             dropdown.style.color = "white";

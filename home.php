@@ -99,6 +99,16 @@ $_SESSION['LAST_ACTIVITY'] = time();
             color: white;
         }
 
+        .status-dropdown option[value="Call"] {
+            background-color: #a6d7ff;
+            color: black;
+        }
+
+        .status-dropdown option[value="Chat"] {
+            background-color: #ffb6c1;
+            color: black;
+        }
+
         #jobTable tbody td {
             font-weight: 100;
             font-family: 'Rubik', sans-serif;
@@ -125,6 +135,49 @@ $_SESSION['LAST_ACTIVITY'] = time();
             width: 50px;
             text-align: center;
         }
+
+        #statusFilter {
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ced4da;
+        }
+
+        #statusFilter option {
+            padding: 5px;
+        }
+
+        /* Color the options to match the status colors */
+        #statusFilter option[value="Call"] {
+            background-color: #a6d7ff;
+        }
+
+        #statusFilter option[value="Chat"] {
+            background-color: #ffb6c1;
+        }
+
+        #statusFilter option[value="NotPaid"] {
+            background-color: #d889f7;
+        }
+
+        #statusFilter option[value="Design"] {
+            background-color: #f0ad4e;
+        }
+
+        #statusFilter option[value="Confirmation"] {
+            background-color: #5bc0de;
+        }
+
+        #statusFilter option[value="Print"] {
+            background-color: #09e9cb;
+        }
+
+        #statusFilter option[value="Delivery"] {
+            background-color: #5cb85c;
+        }
+
+        #statusFilter option[value="Finished"] {
+            background-color: #d9534f;
+        }
     </style>
 </head>
 
@@ -133,8 +186,26 @@ $_SESSION['LAST_ACTIVITY'] = time();
     <div class="container-fluid">
         <h1 class="mb-4">Job Status List</h1>
         <div class="mb-4">
-            <input type="text" id="searchBar" class="form-control" placeholder="Search by Order Number or Company Name"
-                onkeyup="searchJobs()">
+            <div class="row">
+            <div class="col-md-10">
+                    <input type="text" id="searchBar" class="form-control"
+                        placeholder="Search by Order Number or Company Name" onkeyup="searchJobs()">
+                </div>
+                <div class="col-md-2">
+                    <select id="statusFilter" class="form-select" onchange="filterByStatus()">
+                        <option value="">All Statuses</option>
+                        <option value="Call">Call</option>
+                        <option value="Chat">Chat</option>
+                        <option value="NotPaid">Not Paid</option>
+                        <option value="Design">Design</option>
+                        <option value="Confirmation">Confirmation</option>
+                        <option value="Print">Print</option>
+                        <option value="Delivery">Delivery</option>
+                        <option value="Finished">Finished</option>
+                    </select>
+                </div>
+                
+            </div>
         </div>
         <table class="table table-bordered" id="jobTable">
             <thead>
@@ -172,6 +243,8 @@ $_SESSION['LAST_ACTIVITY'] = time();
                         <td><?= $row['deadline'] ?></td>
                         <td class="status-cell text-white text-center">
                             <select class="form-select status-dropdown" data-id="<?= $row['id'] ?>">
+                                <option value="Call" <?= ($row['status'] == 'Call') ? 'selected' : '' ?>>Call</option>
+                                <option value="Chat" <?= ($row['status'] == 'Chat') ? 'selected' : '' ?>>Chat</option>
                                 <option value="NotPaid" <?= ($row['status'] == 'NotPaid') ? 'selected' : '' ?>>Not Paid
                                 </option>
                                 <option value="Design" <?= ($row['status'] == 'Design') ? 'selected' : '' ?>>Design</option>
@@ -449,19 +522,76 @@ $_SESSION['LAST_ACTIVITY'] = time();
                         });
                 });
             });
+
+            // Set color for status filter
+            const statusFilter = document.getElementById('statusFilter');
+            if (statusFilter) {
+                setDropdownColor(statusFilter);
+                statusFilter.addEventListener('change', function () {
+                    setDropdownColor(this);
+                });
+            }
         });
+
+
+
 
         function setDropdownColor(dropdown) {
             let statusColor = {
+                "Call": "#a6d7ff",
+                "Chat": "#ffb6c1",
+                "NotPaid": "#d889f7",
                 "Design": "#f0ad4e",
                 "Confirmation": "#5bc0de",
                 "Print": "#09e9cb",
                 "Delivery": "#5cb85c",
-                "Finished": "#d9534f",
-                "NotPaid": "#d889f7"
+                "Finished": "#d9534f"
             };
-            dropdown.style.backgroundColor = statusColor[dropdown.value] || "white";
-            dropdown.style.color = "white";
+
+            if (dropdown.classList.contains('status-dropdown')) {
+                dropdown.style.backgroundColor = statusColor[dropdown.value] || "white";
+                dropdown.style.color = "white";
+            } else if (dropdown.id === 'statusFilter') {
+                dropdown.style.backgroundColor = statusColor[dropdown.value] || "#f8f9fa";
+            }
+        }
+
+        function filterByStatus() {
+            const selectedStatus = document.getElementById('statusFilter').value;
+            const rows = document.querySelectorAll('#jobTable tbody tr');
+
+            rows.forEach(row => {
+                const statusDropdown = row.querySelector('.status-dropdown');
+                const rowStatus = statusDropdown ? statusDropdown.value : '';
+
+                if (!selectedStatus || rowStatus === selectedStatus) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function searchJobs() {
+            const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+            const selectedStatus = document.getElementById('statusFilter').value;
+            const rows = document.querySelectorAll('#jobTable tbody tr');
+
+            rows.forEach(row => {
+                const orderNumber = row.cells[1].textContent.toLowerCase(); // Changed index from 0 to 1
+                const companyName = row.cells[2].textContent.toLowerCase(); // Changed index from 1 to 2
+                const statusDropdown = row.querySelector('.status-dropdown');
+                const rowStatus = statusDropdown ? statusDropdown.value : '';
+
+                const matchesSearch = orderNumber.includes(searchTerm) || companyName.includes(searchTerm);
+                const matchesStatus = !selectedStatus || rowStatus === selectedStatus;
+
+                if (matchesSearch && matchesStatus) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         }
     </script>
 </body>
