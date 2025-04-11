@@ -187,7 +187,7 @@ $_SESSION['LAST_ACTIVITY'] = time();
         <h1 class="mb-4">Job Status List</h1>
         <div class="mb-4">
             <div class="row">
-            <div class="col-md-10">
+                <div class="col-md-3">
                     <input type="text" id="searchBar" class="form-control"
                         placeholder="Search by Order Number or Company Name" onkeyup="searchJobs()">
                 </div>
@@ -205,7 +205,20 @@ $_SESSION['LAST_ACTIVITY'] = time();
                     </select>
                 </div>
                 
+
+                <div class="col-md-2">
+                 
+                    <input type="date" class="form-control" id="startDateFrom" onchange="filterByDateRange()">
+                </div>
+                <div class="col-md-2">
+                    
+                    <input type="date" class="form-control" id="startDateTo" onchange="filterByDateRange()">
+                </div>
+                <div class="col-md-1 ">
+                    <button class="btn btn-secondary" onclick="clearDateFilters()">Clear</button>
+                </div>
             </div>
+            
         </div>
         <table class="table table-bordered" id="jobTable">
             <thead>
@@ -533,9 +546,6 @@ $_SESSION['LAST_ACTIVITY'] = time();
             }
         });
 
-
-
-
         function setDropdownColor(dropdown) {
             let statusColor = {
                 "Call": "#a6d7ff",
@@ -572,27 +582,86 @@ $_SESSION['LAST_ACTIVITY'] = time();
             });
         }
 
+        function filterByDateRange() {
+            const fromDate = document.getElementById('startDateFrom').value;
+            const toDate = document.getElementById('startDateTo').value;
+            const rows = document.querySelectorAll('#jobTable tbody tr');
+
+            // If both dates are empty, show all rows
+            if (!fromDate && !toDate) {
+                rows.forEach(row => row.style.display = '');
+                return;
+            }
+
+            rows.forEach(row => {
+                const dateCell = row.cells[6]; // Job Start Date is in the 7th column (index 6)
+                const dateText = dateCell.textContent.trim();
+                const jobDate = new Date(dateText.split(' ')[0]); // Extract date part only
+
+                let showRow = true;
+
+                if (fromDate) {
+                    const fromDateObj = new Date(fromDate);
+                    showRow = showRow && (jobDate >= fromDateObj);
+                }
+
+                if (toDate) {
+                    const toDateObj = new Date(toDate);
+                    showRow = showRow && (jobDate <= toDateObj);
+                }
+
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+
+        function clearDateFilters() {
+            document.getElementById('startDateFrom').value = '';
+            document.getElementById('startDateTo').value = '';
+            filterByDateRange();
+        }
+
+        // Update the searchJobs function to include date filtering
         function searchJobs() {
             const searchTerm = document.getElementById('searchBar').value.toLowerCase();
             const selectedStatus = document.getElementById('statusFilter').value;
+            const fromDate = document.getElementById('startDateFrom').value;
+            const toDate = document.getElementById('startDateTo').value;
             const rows = document.querySelectorAll('#jobTable tbody tr');
 
             rows.forEach(row => {
-                const orderNumber = row.cells[1].textContent.toLowerCase(); // Changed index from 0 to 1
-                const companyName = row.cells[2].textContent.toLowerCase(); // Changed index from 1 to 2
+                const orderNumber = row.cells[1].textContent.toLowerCase();
+                const companyName = row.cells[2].textContent.toLowerCase();
                 const statusDropdown = row.querySelector('.status-dropdown');
                 const rowStatus = statusDropdown ? statusDropdown.value : '';
+
+                // Date filtering
+                const dateCell = row.cells[6];
+                const dateText = dateCell.textContent.trim();
+                const jobDate = new Date(dateText.split(' ')[0]);
+                let dateInRange = true;
+
+                if (fromDate) {
+                    const fromDateObj = new Date(fromDate);
+                    dateInRange = dateInRange && (jobDate >= fromDateObj);
+                }
+
+                if (toDate) {
+                    const toDateObj = new Date(toDate);
+                    dateInRange = dateInRange && (jobDate <= toDateObj);
+                }
 
                 const matchesSearch = orderNumber.includes(searchTerm) || companyName.includes(searchTerm);
                 const matchesStatus = !selectedStatus || rowStatus === selectedStatus;
 
-                if (matchesSearch && matchesStatus) {
+                if (matchesSearch && matchesStatus && dateInRange) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
                 }
             });
         }
+
+
     </script>
 </body>
 
