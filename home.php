@@ -204,21 +204,21 @@ $_SESSION['LAST_ACTIVITY'] = time();
                         <option value="Finished">Finished</option>
                     </select>
                 </div>
-                
+
 
                 <div class="col-md-2">
-                 
+
                     <input type="date" class="form-control" id="startDateFrom" onchange="filterByDateRange()">
                 </div>
                 <div class="col-md-2">
-                    
+
                     <input type="date" class="form-control" id="startDateTo" onchange="filterByDateRange()">
                 </div>
                 <div class="col-md-1 ">
                     <button class="btn btn-secondary" onclick="clearDateFilters()">Clear</button>
                 </div>
             </div>
-            
+
         </div>
         <table class="table table-bordered" id="jobTable">
             <thead>
@@ -271,10 +271,12 @@ $_SESSION['LAST_ACTIVITY'] = time();
                             </select>
                         </td>
                         <td class="action-cell">
-                            <button class="delete-btn"
-                                onclick="confirmDelete(<?= $row['id'] ?>, '<?= htmlspecialchars($row['order_number']) ?>')">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
+                            <?php if ($_SESSION['username'] === 'Tharindu'): ?>
+                                <button class="delete-btn"
+                                    onclick="confirmDelete(<?= $row['id'] ?>, '<?= htmlspecialchars($row['order_number']) ?>')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endwhile; ?>

@@ -35,15 +35,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = $_POST['id'];
     $password = $_POST['password'];
 
-    // Verify password
-    $stmt = $conn->prepare("SELECT password FROM users WHERE id = ?");
+    // Get user details
+    $stmt = $conn->prepare("SELECT username, password FROM users WHERE id = ?");
     $stmt->bind_param("i", $_SESSION['user_id']);
     $stmt->execute();
     $result = $stmt->get_result();
     $user = $result->fetch_assoc();
 
-    if (!$user || !password_verify($password, $user['password'])) {
-        echo json_encode(['status' => 'error', 'message' => 'Incorrect password']);
+    // Check if user is Tharindu and password is correct
+    if (!$user || $user['username'] !== 'Tharindu' || !password_verify($password, $user['password'])) {
+        echo json_encode(['status' => 'error', 'message' => 'Delete permission denied. Only Tharindu can delete jobs.']);
         exit();
     }
 
